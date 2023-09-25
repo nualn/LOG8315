@@ -36,3 +36,87 @@ def deploy_ec2():
 def terminate_ec2():
     for i in len(ec2_instances):
         response = ec2_instances[i].terminate_instances(InstanceIds=[instance_ids[i]])
+
+
+# Initialize the AWS SDK
+client = boto3.client('elbv2') #elastic load balancer version 2
+
+# Creation of target groups for the two clusters:
+response_cluster1 = client.create_target_group(
+    Name='Cluster1TargetGroup',
+    Protocol='HTTP',
+    Port=80,
+    TargetType='instance',
+    HealthCheckProtocol='HTTP',
+    HealthCheckPath='/cluster1',        #URL cluster 1
+    HealthCheckPort='traffic-port',
+)
+
+response_cluster2 = client.create_target_group(
+    Name='Cluster2TargetGroup',
+    Protocol='HTTP',
+    Port=80,
+    TargetType='instance',
+    HealthCheckProtocol='HTTP',
+    HealthCheckPath='/cluster2',        #URL cluster 2
+    HealthCheckPort='traffic-port',
+)
+
+# Create an Application Load Balancer
+response_alb = client.create_load_balancer(
+    Name='AppLoadBalancer',
+    Subnets=['subnet-xxxxxx'],  # Replace with your subnet IDs
+    SecurityGroups=['sg-xxxxxx'],  # Replace with your security group IDs
+    Scheme='internet-facing',
+)
+
+# Create listener rules to route traffic to target groups
+response_rule1 = client.create_listener_rule(
+    ListenerArn=response_alb['LoadBalancers'][0]['ListenerArn'],
+    Conditions=[
+        {
+            'Field': 'path-pattern',
+            'Values': ['/cluster1'],            #URL matching target group 1
+        },
+    ],
+    Priority=1,
+    Action={
+        'Type': 'fixed-response',
+        'FixedResponseConfig': {
+            'ContentType': 'text/plain',
+            'StatusCode': '200',
+            'ContentType': 'text/plain',
+            'ContentDescription': 'm4.large instance ID',
+            'ContentValue': 'm4-large-instance-id',  # Replace with the actual instance ID
+        },
+    },
+)
+
+response_rule2 = client.create_listener_rule(
+    ListenerArn=response_alb['LoadBalancers'][0]['ListenerArn'],
+    Conditions=[
+        {
+            'Field': 'path-pattern',
+            'Values': ['/cluster2'],                #URL matching target group 2
+        },
+    ],
+    Priority=2,
+    Action={
+        'Type': 'fixed-response',
+        'FixedResponseConfig': {
+            'ContentType': 'text/plain',
+            'StatusCode': '200',
+            'ContentType': 'text/plain',
+            'ContentDescription': 't2.large instance ID',
+            'ContentValue': 't2-large-instance-id',  # Replace with the actual instance ID
+        },
+    },
+)
+
+# Register EC2 instances to target groups
+# Use boto3 to register instances to target groups
+
+# Monitor performance using CloudWatch
+# Set up CloudWatch Alarms and Metrics
+
+print("ALB and listener rules configured successfully.")
