@@ -1,4 +1,5 @@
 #Python Program for creating a connection
+import os
 import boto3
 
 
@@ -8,15 +9,12 @@ ec2_instances = []
 connections =[]
 instance_ids=[]
 
-
-
 i=1
 def deploy_ec2():
+    global i
     for zone in availabity_zones:
         ec2 = boto3.client('ec2',
-                    zone,
-                    aws_access_key_id='',
-                    aws_secret_access_key='')
+                    zone)
         ec2_instances.append(ec2)
         
         id = ec2.Instance('id'+ i)
@@ -38,85 +36,88 @@ def terminate_ec2():
         response = ec2_instances[i].terminate_instances(InstanceIds=[instance_ids[i]])
 
 
-# Initialize the AWS SDK
-client = boto3.client('elbv2') #elastic load balancer version 2
+# # Initialize the AWS SDK
+# client = boto3.client('elbv2', region_name='us-east-1') #elastic load balancer version 2
 
-# Creation of target groups for the two clusters:
-response_cluster1 = client.create_target_group(
-    Name='Cluster1TargetGroup',
-    Protocol='HTTP',
-    Port=80,
-    TargetType='instance',
-    HealthCheckProtocol='HTTP',
-    HealthCheckPath='/cluster1',        #URL cluster 1
-    HealthCheckPort='traffic-port',
-)
+# # Creation of target groups for the two clusters:
+# response_cluster1 = client.create_target_group(
+#     Name='Cluster1TargetGroup',
+#     Protocol='HTTP',
+#     Port=80,
+#     TargetType='instance',
+#     VpcId='vpc-073a0b8c4bb5c3699',  # <-- Add your VPC ID here
+#     HealthCheckProtocol='HTTP',
+#     HealthCheckPath='/cluster1',        #URL cluster 1
+#     HealthCheckPort='traffic-port',
+# )
 
-response_cluster2 = client.create_target_group(
-    Name='Cluster2TargetGroup',
-    Protocol='HTTP',
-    Port=80,
-    TargetType='instance',
-    HealthCheckProtocol='HTTP',
-    HealthCheckPath='/cluster2',        #URL cluster 2
-    HealthCheckPort='traffic-port',
-)
+# response_cluster2 = client.create_target_group(
+#     Name='Cluster2TargetGroup',
+#     Protocol='HTTP',
+#     Port=80,
+#     TargetType='instance',
+#     VpcId='vpc-073a0b8c4bb5c3699',  # <-- Add your VPC ID here xxx
+#     HealthCheckProtocol='HTTP',
+#     HealthCheckPath='/cluster2',        #URL cluster 2
+#     HealthCheckPort='traffic-port',
+# )
 
-# Create an Application Load Balancer
-response_alb = client.create_load_balancer(
-    Name='AppLoadBalancer',
-    Subnets=['subnet-xxxxxx'],  # Replace with your subnet IDs
-    SecurityGroups=['sg-xxxxxx'],  # Replace with your security group IDs
-    Scheme='internet-facing',
-)
 
-# Create listener rules to route traffic to target groups
-response_rule1 = client.create_listener_rule(
-    ListenerArn=response_alb['LoadBalancers'][0]['ListenerArn'],
-    Conditions=[
-        {
-            'Field': 'path-pattern',
-            'Values': ['/cluster1'],            #URL matching target group 1
-        },
-    ],
-    Priority=1,
-    Action={
-        'Type': 'fixed-response',
-        'FixedResponseConfig': {
-            'ContentType': 'text/plain',
-            'StatusCode': '200',
-            'ContentType': 'text/plain',
-            'ContentDescription': 'm4.large instance ID',
-            'ContentValue': 'm4-large-instance-id',  # Replace with the actual instance ID
-        },
-    },
-)
+# # Create an Application Load Balancer
+# response_alb = client.create_load_balancer(
+#     Name='AppLoadBalancer',
+#     Subnets=['subnet-069a250660a59a692', 'subnet-09ae9bb6a22db570d'],  # Replace with your subnet IDsxxx
+#     SecurityGroups=['sg-0d21a4f0da1600c08'],  # Replace with your security group IDsxxx
+#     Scheme='internet-facing',
+# )
 
-response_rule2 = client.create_listener_rule(
-    ListenerArn=response_alb['LoadBalancers'][0]['ListenerArn'],
-    Conditions=[
-        {
-            'Field': 'path-pattern',
-            'Values': ['/cluster2'],                #URL matching target group 2
-        },
-    ],
-    Priority=2,
-    Action={
-        'Type': 'fixed-response',
-        'FixedResponseConfig': {
-            'ContentType': 'text/plain',
-            'StatusCode': '200',
-            'ContentType': 'text/plain',
-            'ContentDescription': 't2.large instance ID',
-            'ContentValue': 't2-large-instance-id',  # Replace with the actual instance ID
-        },
-    },
-)
+# # Create listener rules to route traffic to target groups
+# response_rule1 = client.create_listener_rule(
+#     ListenerArn=response_alb['LoadBalancers'][0]['ListenerArn'],
+#     Conditions=[
+#         {
+#             'Field': 'path-pattern',
+#             'Values': ['/cluster1'],            #URL matching target group 1
+#         },
+#     ],
+#     Priority=1,
+#     Action={
+#         'Type': 'fixed-response',
+#         'FixedResponseConfig': {
+#             'ContentType': 'text/plain',
+#             'StatusCode': '200',
+#             'ContentType': 'text/plain',
+#             'ContentDescription': 'm4.large instance ID',
+#             'ContentValue': 'm4-large-instance-id',  # Replace with the actual instance ID
+#         },
+#     },
+# )
 
-# Register EC2 instances to target groups
-# Use boto3 to register instances to target groups
+# response_rule2 = client.create_listener_rule(
+#     ListenerArn=response_alb['LoadBalancers'][0]['ListenerArn'],
+#     Conditions=[
+#         {
+#             'Field': 'path-pattern',
+#             'Values': ['/cluster2'],                #URL matching target group 2
+#         },
+#     ],
+#     Priority=2,
+#     Action={
+#         'Type': 'fixed-response',
+#         'FixedResponseConfig': {
+#             'ContentType': 'text/plain',
+#             'StatusCode': '200',
+#             'ContentType': 'text/plain',
+#             'ContentDescription': 't2.large instance ID',
+#             'ContentValue': 't2-large-instance-id',  # Replace with the actual instance ID
+#         },
+#     },
+# )
 
-# Monitor performance using CloudWatch
-# Set up CloudWatch Alarms and Metrics
+# # Register EC2 instances to target groups
+# # Use boto3 to register instances to target groups
+
+# # Monitor performance using CloudWatch
+# # Set up CloudWatch Alarms and Metrics
 
 print("ALB and listener rules configured successfully.")
