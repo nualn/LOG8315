@@ -1,8 +1,8 @@
-import time
 import boto3
 
 ec2_instances = []
 instance_ids = []
+
 
 def launch_instances():
     global ec2_instances
@@ -14,8 +14,9 @@ def launch_instances():
     # Loop to create 10 instances
     for i in range(9):
         # Availability Zones
-        availability_zone = f'us-east-1{chr(97 + i % 3)}'  # 'us-east-1a', 'us-east-1b', 'us-east-1c' will be chosen in a round-robin manner
-        
+        # 'us-east-1a', 'us-east-1b', 'us-east-1c' will be chosen in a round-robin manner
+        availability_zone = f'us-east-1{chr(97 + i % 3)}'
+
         # Create instance
         instance = ec2.create_instances(
             ImageId='ami-03a6eaae9938c858c',  # Update this to your desired AMI ID
@@ -27,32 +28,72 @@ def launch_instances():
                 'AvailabilityZone': availability_zone
             }
         )
-        
+
         print(f"Launched instance {instance[0].id} in {availability_zone}")
         ec2_instances.append(ec2)
         instance_ids.append(instance[0].id)
-        
+
+
 def terminate_ec2():
     global ec2_instances
     global instance_ids
     for i, ec2 in enumerate(ec2_instances):
-        response = ec2.meta.client.terminate_instances(InstanceIds=[instance_ids[i]])
+        response = ec2.meta.client.terminate_instances(
+            InstanceIds=[instance_ids[i]])
         print(f"Terminated instance {instance_ids[i]}")
-        
+
+
+def get_vpc_id():
+    ec2 = boto3.client('ec2')
+    response = ec2.describe_vpcs(
+        Filters=[{'Name': 'isDefault', 'Values': ['true']}])
+
+    default_vpc_id = response['Vpcs'][0]['VpcId']
+    return default_vpc_id
+
+
+def get_subnet_ids(vpc_id):
+    # Initialize the EC2 client
+    ec2 = boto3.client('ec2')
+
+    # Use the describe_subnets method with a filter for the specified VPC
+    response = ec2.describe_subnets(
+        Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
+
+    res = []
+    if 'Subnets' in response:
+        subnets = response['Subnets']
+        for subnet in subnets:
+            subnet_id = subnet['SubnetId']
+            res.append(subnet_id)
+
+    return res
+
+
+def get_security_group_id(vpc_id):
+    # Initialize the EC2 client
+    ec2 = boto3.client('ec2')
+
+    # Use the describe_security_groups method with a filter for the specified VPC
+    response = ec2.describe_security_groups(
+        Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
+
+    # Extract and print information about the security groups
+    if 'SecurityGroups' in response:
+        security_groups = response['SecurityGroups']
+        return security_groups[0]['GroupId']
+
+
 # Initialize the AWS SDK
-elbv2 = boto3.client('elbv2', region_name='us-east-1') #elastic load balancer version 2
+# elastic load balancer version 2
+elbv2 = boto3.client('elbv2', region_name='us-east-1')
 
 
-def create_load_balancer():
+def create_load_balancer(subnets, securityGroups):
     response = elbv2.create_load_balancer(
         Name='my-load-balancer',
-        Subnets=[
-            'subnet-0518a1445358c0a0f',  # use a
-            'subnet-03adf7a6f11e37885',  # use b
-        ],
-        SecurityGroups=[
-            'sg-0c8ae1bcfbfb2f55d',  # replace with your security group ID
-        ],
+        Subnets=subnets,
+        SecurityGroups=securityGroups,
         Scheme='internet-facing',
         Tags=[
             {
@@ -63,12 +104,13 @@ def create_load_balancer():
     )
     return response['LoadBalancers'][0]['LoadBalancerArn']
 
-def create_target_group_cluster1():
+
+def create_target_group_cluster1(vpc_id):
     response = elbv2.create_target_group(
         Name='tgcluster1',
         Protocol='HTTP',
         Port=80,
-        VpcId='vpc-0ef227a439b52f951',  # replace with your VPC ID
+        VpcId=vpc_id,
         HealthCheckProtocol='HTTP',
         HealthCheckPort='80',
         HealthCheckPath='/cluster1',
@@ -79,12 +121,13 @@ def create_target_group_cluster1():
     )
     return response['TargetGroups'][0]['TargetGroupArn']
 
-def create_target_group_cluster2():
+
+def create_target_group_cluster2(vpc_id):
     response = elbv2.create_target_group(
         Name='tgcluster2',
         Protocol='HTTP',
         Port=80,
-        VpcId='vpc-0ef227a439b52f951',  # replace with your VPC ID
+        VpcId=vpc_id,
         HealthCheckProtocol='HTTP',
         HealthCheckPort='80',
         HealthCheckPath='/cluster2',
@@ -107,23 +150,25 @@ def register_targets(target_group_arn):
         ]
     )
 
+
 def create_listener(load_balancer_arn):
     listener_arn = elbv2.create_listener(
         LoadBalancerArn=load_balancer_arn,
         Protocol='HTTP',
         Port=80,
         DefaultActions=[
-        {
-            'Type': 'fixed-response',
-            'FixedResponseConfig': {
-                'ContentType': 'text/plain',
-                'StatusCode': '200',
-                'ContentType': 'text/plain',
-                'MessageBody': 'Hi listener here !',
-            },
-        }]
+            {
+                'Type': 'fixed-response',
+                'FixedResponseConfig': {
+                    'ContentType': 'text/plain',
+                    'StatusCode': '200',
+                    'ContentType': 'text/plain',
+                    'MessageBody': 'Hi listener here !',
+                },
+            }]
     )
     return listener_arn['Listeners'][0]['ListenerArn']
+
 
 def create_listener_rule(listener_arn, target_group_arn, rule_priority, rule_conditions):
     elbv2.create_rule(
@@ -138,36 +183,46 @@ def create_listener_rule(listener_arn, target_group_arn, rule_priority, rule_con
         ]
     )
 
-Condition1=[
-        {
-            'Field': 'path-pattern',
-            'Values': ['/cluster1'],                #URL matching target group 2
-        },
-    ]
 
-Condition2=[
-        {
-            'Field': 'path-pattern',
-            'Values': ['/cluster2'],                #URL matching target group 2
-        },
-    ]
+Condition1 = [
+    {
+        'Field': 'path-pattern',
+        'Values': ['/cluster1'],  # URL matching target group 2
+    },
+]
 
-rule_priority=[1,2]
+Condition2 = [
+    {
+        'Field': 'path-pattern',
+        'Values': ['/cluster2'],  # URL matching target group 2
+    },
+]
+
+rule_priority = [1, 2]
 
 if __name__ == '__main__':
-    
+    vpc_id = get_vpc_id()
+    subnets = get_subnet_ids(vpc_id)
+    security_group = get_security_group_id(vpc_id)
+
+    print("vpc: ", vpc_id)
+    print("subnets: ", subnets)
+    print("security_group: ", security_group)
+
     launch_instances()
-    time.sleep(15)  # Wait for instances to start
-    
-    # Load Balancer part
-    load_balancer_arn = create_load_balancer()
-    time.sleep(15)  # Wait for load balancer to be active
-    
-    target_group_arn = [create_target_group_cluster1(), create_target_group_cluster2()]
+
+    load_balancer_arn = create_load_balancer(subnets[:2], [security_group])
+
+    target_group_arn = [
+        create_target_group_cluster1(vpc_id),
+        create_target_group_cluster2(vpc_id)
+    ]
     register_targets(target_group_arn[0])
     register_targets(target_group_arn[1])
 
     listener_arn = create_listener(load_balancer_arn)
-    
-    create_listener_rule(listener_arn, target_group_arn[0], rule_priority[0], Condition1)
-    create_listener_rule(listener_arn, target_group_arn[1], rule_priority[1], Condition2)
+
+    create_listener_rule(
+        listener_arn, target_group_arn[0], rule_priority[0], Condition1)
+    create_listener_rule(
+        listener_arn, target_group_arn[1], rule_priority[1], Condition2)
