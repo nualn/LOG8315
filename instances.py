@@ -15,7 +15,7 @@ def launch_instances():
     # Initialize EC2 resource
     ec2 = session.resource('ec2')
     # Loop to create 10 instances
-    for i in range(10):
+    for i in range(9):
         # Availability Zones
         availability_zone = f'us-east-1{chr(97 + i % 3)}'  # 'us-east-1a', 'us-east-1b', 'us-east-1c' will be chosen in a round-robin manner
         
@@ -214,7 +214,7 @@ if __name__ == '__main__':
     time.sleep(15)  # Wait for instances to start
     
     # Load Balancer part
-    load_balancer_arn = create_load_balancer()
+    load_balancer_arn = create_load_balancer(vpc_id, security_group)
     time.sleep(15)  # Wait for load balancer to be active
     
     target_group_arn = [create_target_group_cluster1(vpc_id), create_target_group_cluster2(vpc_id)]
