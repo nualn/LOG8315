@@ -7,7 +7,7 @@ instance_1 = []
 instance_2 = []
 
 
-def launch_instances():
+def launch_instances(security_groups):
     global ec2_instances
     global instance_ids
     # Initialize a session using the default configuration
@@ -23,7 +23,7 @@ def launch_instances():
         start_script = open('flask_clusters.sh', 'r').read()
         # Create instance
         instance = ec2.create_instances(
-            ImageId='ami-03a6eaae9938c858c',  # Update this to your desired AMI ID
+            ImageId='ami-067d1e60475437da2',  # Update this to your desired AMI ID
             MinCount=1,
             MaxCount=1,
             InstanceType="m4.large" if i % 2 else "t2.large",
@@ -32,6 +32,7 @@ def launch_instances():
                 'AvailabilityZone': availability_zone
             },
             UserData=start_script,
+            SecurityGroupIds=security_groups
         )
 
         print(f"Launched instance {instance[0].id} in {availability_zone}")
@@ -265,13 +266,12 @@ Condition2 = [
 rule_priority = [1, 2]
 
 if __name__ == '__main__':
-
     vpc_id = get_vpc_id()
     subnets = get_subnet_ids(vpc_id)
 
     security_groups = [create_security_group(vpc_id)]
 
-    launch_instances()
+    launch_instances(security_groups)
     time.sleep(15)
 
     # Load Balancer part

@@ -1,7 +1,7 @@
 #!/bin/bash
 
-apt-get update
-apt-get -y install python3-pip 
+sudo yum update
+sudo yum -y install python3-pip 
 pip3 install flask
 mkdir flask_app 
 cd flask_app
@@ -17,4 +17,5 @@ def cluster2_app():
     return 'Cluster 2 is running successfully !'
 if __name__ == \"__main__\":
        app.run(host='0.0.0.0', port=80) " | tee app.py
-python3 app.py 
+
+python3 app.py
