@@ -4,10 +4,10 @@ import boto3
 
 class Instances:
     def __init__(self):
-        ec2_instances = []
-        instance_ids = []
-        instance_1 = []
-        instance_2 = []
+        self.ec2_instances = []
+        self.instance_ids = []
+        self.instance_1 = []
+        self.instance_2 = []
 
     def launch_instances(self, security_groups):
         # Initialize a session using the default configuration
