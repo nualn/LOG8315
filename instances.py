@@ -3,8 +3,8 @@ import boto3
 
 ec2_instances = []
 instance_ids = []
-instance_1=[]
-instance_2=[]
+instance_1 = []
+instance_2 = []
 
 
 def launch_instances():
@@ -14,11 +14,13 @@ def launch_instances():
     session = boto3.Session(region_name='us-east-1')
     # Initialize EC2 resource
     ec2 = session.resource('ec2')
-    # Loop to create 10 instances
+    # Loop to create 9 instances
     for i in range(9):
         # Availability Zones
-        availability_zone = f'us-east-1{chr(97 + i % 3)}'  # 'us-east-1a', 'us-east-1b', 'us-east-1c' will be chosen in a round-robin manner
-        
+        # 'us-east-1a', 'us-east-1b', 'us-east-1c' will be chosen in a round-robin manner
+        availability_zone = f'us-east-1{chr(97 + i % 3)}'
+
+        start_script = open('flask_cluster.sh', 'r').read()
         # Create instance
         instance = ec2.create_instances(
             ImageId='ami-03a6eaae9938c858c',  # Update this to your desired AMI ID
@@ -28,12 +30,13 @@ def launch_instances():
             KeyName='vockey',  # Update this to your key pair name
             Placement={
                 'AvailabilityZone': availability_zone
-            }
+            },
+            UserData=start_script,
         )
-        
+
         print(f"Launched instance {instance[0].id} in {availability_zone}")
         ec2_instances.append(ec2)
-        if i % 2==0:
+        if i % 2 == 0:
             instance_1.append(instance[0].id)
         else:
             instance_2.append(instance[0].id)
@@ -41,15 +44,17 @@ def launch_instances():
         instance_ids.append(instance[0].id)
     print(instance_1, instance_2)
     print(instance_ids)
-        
+
+
 def terminate_ec2():
     global ec2_instances
     global instance_ids
     for i, ec2 in enumerate(ec2_instances):
-        response = ec2.meta.client.terminate_instances(InstanceIds=[instance_ids[i]])
+        response = ec2.meta.client.terminate_instances(
+            InstanceIds=[instance_ids[i]])
         print(f"Terminated instance {instance_ids[i]}")
-        
-        
+
+
 def get_vpc_id():
     ec2 = boto3.client('ec2')
     response = ec2.describe_vpcs(
@@ -77,7 +82,7 @@ def get_subnet_ids(vpc_id):
     return res
 
 
-def get_security_group_id(vpc_id):
+def get_security_group_ids(vpc_id):
     # Initialize the EC2 client
     ec2 = boto3.client('ec2')
 
@@ -86,12 +91,19 @@ def get_security_group_id(vpc_id):
         Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
 
     # Extract and print information about the security groups
+    ids = []
     if 'SecurityGroups' in response:
         security_groups = response['SecurityGroups']
-        return security_groups[0]['GroupId']
-    
+        for security_group in security_groups:
+            security_group_id = security_group['GroupId']
+            ids.append(security_group_id)
+
+    return ids
+
+
 # Initialize the AWS SDK
-elbv2 = boto3.client('elbv2', region_name='us-east-1') #elastic load balancer version 2
+# elastic load balancer version 2
+elbv2 = boto3.client('elbv2', region_name='us-east-1')
 
 
 def create_load_balancer(subnets, securityGroups):
@@ -109,6 +121,7 @@ def create_load_balancer(subnets, securityGroups):
     )
     return response['LoadBalancers'][0]['LoadBalancerArn']
 
+
 def create_target_group_cluster1(vpc_id):
     response = elbv2.create_target_group(
         Name='tgcluster1',
@@ -124,6 +137,7 @@ def create_target_group_cluster1(vpc_id):
         UnhealthyThresholdCount=2
     )
     return response['TargetGroups'][0]['TargetGroupArn']
+
 
 def create_target_group_cluster2(vpc_id):
     response = elbv2.create_target_group(
@@ -153,23 +167,25 @@ def register_targets(target_group_arn, instance_id_list):
         ]
     )
 
+
 def create_listener(load_balancer_arn):
     listener_arn = elbv2.create_listener(
         LoadBalancerArn=load_balancer_arn,
         Protocol='HTTP',
         Port=80,
         DefaultActions=[
-        {
-            'Type': 'fixed-response',
-            'FixedResponseConfig': {
-                'ContentType': 'text/plain',
-                'StatusCode': '200',
-                'ContentType': 'text/plain',
-                'MessageBody': 'Hi listener here !',
-            },
-        }]
+            {
+                'Type': 'fixed-response',
+                'FixedResponseConfig': {
+                    'ContentType': 'text/plain',
+                    'StatusCode': '200',
+                    'ContentType': 'text/plain',
+                    'MessageBody': 'Hi listener here !',
+                },
+            }]
     )
     return listener_arn['Listeners'][0]['ListenerArn']
+
 
 def create_listener_rule(listener_arn, target_group_arn, rule_priority, rule_conditions):
     elbv2.create_rule(
@@ -184,46 +200,47 @@ def create_listener_rule(listener_arn, target_group_arn, rule_priority, rule_con
         ]
     )
 
-Condition1=[
-        {
-            'Field': 'path-pattern',
-            'Values': ['/cluster1'],                #URL matching target group 2
-        },
-    ]
 
-Condition2=[
-        {
-            'Field': 'path-pattern',
-            'Values': ['/cluster2'],                #URL matching target group 2
-        },
-    ]
+Condition1 = [
+    {
+        'Field': 'path-pattern',
+        'Values': ['/cluster1'],  # URL matching target group 2
+    },
+]
 
-rule_priority=[1,2]
+Condition2 = [
+    {
+        'Field': 'path-pattern',
+        'Values': ['/cluster2'],  # URL matching target group 2
+    },
+]
+
+rule_priority = [1, 2]
 
 if __name__ == '__main__':
-    
+
     vpc_id = get_vpc_id()
     subnets = get_subnet_ids(vpc_id)
-    security_group = get_security_group_id(vpc_id)
 
-    print("vpc: ", vpc_id)
-    print("subnets: ", subnets)
-    print("security_group: ", security_group)
+    security_groups = get_security_group_ids(vpc_id)
 
     launch_instances()
-    time.sleep(15)  # Wait for instances to start
-    
+    time.sleep(15)
+
     # Load Balancer part
-    load_balancer_arn = create_load_balancer(vpc_id, security_group)
-    time.sleep(15)  # Wait for load balancer to be active
-    
-    target_group_arn = [create_target_group_cluster1(vpc_id), create_target_group_cluster2(vpc_id)]
-    
+    load_balancer_arn = create_load_balancer(subnets[:2], security_groups)
+    time.sleep(15)
+
+    target_group_arn = [create_target_group_cluster1(
+        vpc_id), create_target_group_cluster2(vpc_id)]
+
     register_targets(target_group_arn[0], instance_1)
     register_targets(target_group_arn[1], instance_2)
 
     listener_arn = create_listener(load_balancer_arn)
-    
-    create_listener_rule(listener_arn, target_group_arn[0], rule_priority[0], Condition1)
-    create_listener_rule(listener_arn, target_group_arn[1], rule_priority[1], Condition2)
+
+    create_listener_rule(
+        listener_arn, target_group_arn[0], rule_priority[0], Condition1)
+    create_listener_rule(
+        listener_arn, target_group_arn[1], rule_priority[1], Condition2)
     terminate_ec2()
