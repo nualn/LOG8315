@@ -104,7 +104,7 @@ class Instances:
         default_vpc_id = response['Vpcs'][0]['VpcId']
         return default_vpc_id
 
-    def get_subnet_ids(slef, vpc_id):
+    def get_subnet_ids(self, vpc_id):
         # Initialize the EC2 client
         ec2 = boto3.client('ec2')
 
@@ -137,7 +137,7 @@ class Instances:
         )
         return (response['LoadBalancers'][0]['LoadBalancerArn'], response['LoadBalancers'][0]['DNSName'])
 
-    def create_target_group_cluster1(vpc_id):
+    def create_target_group_cluster1(self, vpc_id):
         elbv2 = boto3.client('elbv2', region_name='us-east-1')
         response = elbv2.create_target_group(
             Name='tgcluster1',
@@ -154,7 +154,7 @@ class Instances:
         )
         return response['TargetGroups'][0]['TargetGroupArn']
 
-    def create_target_group_cluster2(vpc_id):
+    def create_target_group_cluster2(self, vpc_id):
         elbv2 = boto3.client('elbv2', region_name='us-east-1')
         response = elbv2.create_target_group(
             Name='tgcluster2',
@@ -171,7 +171,7 @@ class Instances:
         )
         return response['TargetGroups'][0]['TargetGroupArn']
 
-    def register_targets(target_group_arn, instance_id_list):
+    def register_targets(self, target_group_arn, instance_id_list):
         elbv2 = boto3.client('elbv2', region_name='us-east-1')
         elbv2.register_targets(
             TargetGroupArn=target_group_arn,
@@ -183,7 +183,7 @@ class Instances:
             ]
         )
 
-    def create_listener(load_balancer_arn):
+    def create_listener(self, load_balancer_arn):
         elbv2 = boto3.client('elbv2', region_name='us-east-1')
         listener_arn = elbv2.create_listener(
             LoadBalancerArn=load_balancer_arn,
@@ -202,7 +202,7 @@ class Instances:
         )
         return listener_arn['Listeners'][0]['ListenerArn']
 
-    def create_listener_rule(listener_arn, target_group_arn, rule_priority, rule_conditions):
+    def create_listener_rule(self, listener_arn, target_group_arn, rule_priority, rule_conditions):
         elbv2 = boto3.client('elbv2', region_name='us-east-1')
         elbv2.create_rule(
             ListenerArn=listener_arn,
