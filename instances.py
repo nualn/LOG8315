@@ -121,7 +121,7 @@ class Instances:
 
         return res
 
-    def create_load_balancer(subnets, securityGroups):
+    def create_load_balancer(self, subnets, securityGroups):
         elbv2 = boto3.client('elbv2', region_name='us-east-1')
         response = elbv2.create_load_balancer(
             Name='my-load-balancer',
