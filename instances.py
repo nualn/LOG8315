@@ -20,7 +20,7 @@ def launch_instances():
         # 'us-east-1a', 'us-east-1b', 'us-east-1c' will be chosen in a round-robin manner
         availability_zone = f'us-east-1{chr(97 + i % 3)}'
 
-        start_script = open('flask_cluster.sh', 'r').read()
+        start_script = open('flask_clusters.sh', 'r').read()
         # Create instance
         instance = ec2.create_instances(
             ImageId='ami-03a6eaae9938c858c',  # Update this to your desired AMI ID
@@ -44,6 +44,53 @@ def launch_instances():
         instance_ids.append(instance[0].id)
     print(instance_1, instance_2)
     print(instance_ids)
+
+
+def create_security_group(vpc_id):
+    # Initialize the EC2 client
+    ec2 = boto3.client('ec2')
+
+    # Define the SSH rule
+    ssh_rule = {
+        'IpProtocol': 'tcp',
+        'FromPort': 22,
+        'ToPort': 22,
+        'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+    }
+
+    # Define the HTTP rule
+    http_rule = {
+        'IpProtocol': 'tcp',
+        'FromPort': 80,
+        'ToPort': 80,
+        'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+    }
+
+    # Define the HTTPS rule
+    https_rule = {
+        'IpProtocol': 'tcp',
+        'FromPort': 443,
+        'ToPort': 443,
+        'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+    }
+
+    # Create a security group
+    response = ec2.create_security_group(
+        GroupName='Web-Access',
+        Description='Allow HTTP and HTTPS access',
+        VpcId=vpc_id
+    )
+
+    # Get the created security group ID
+    security_group_id = response['GroupId']
+
+    # Authorize the rules for the security group
+    ec2.authorize_security_group_ingress(
+        GroupId=security_group_id,
+        IpPermissions=[ssh_rule, http_rule, https_rule]
+    )
+
+    return security_group_id
 
 
 def terminate_ec2():
@@ -222,7 +269,7 @@ if __name__ == '__main__':
     vpc_id = get_vpc_id()
     subnets = get_subnet_ids(vpc_id)
 
-    security_groups = get_security_group_ids(vpc_id)
+    security_groups = [create_security_group(vpc_id)]
 
     launch_instances()
     time.sleep(15)
@@ -243,4 +290,4 @@ if __name__ == '__main__':
         listener_arn, target_group_arn[0], rule_priority[0], Condition1)
     create_listener_rule(
         listener_arn, target_group_arn[1], rule_priority[1], Condition2)
-    terminate_ec2()
+    # terminate_ec2()
