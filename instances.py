@@ -77,7 +77,7 @@ def create_security_group(vpc_id):
 
     # Create a security group
     response = ec2.create_security_group(
-        GroupName='Web-Access',
+        GroupName='Web-Access2',
         Description='Allow HTTP and HTTPS access',
         VpcId=vpc_id
     )
@@ -167,7 +167,7 @@ def create_load_balancer(subnets, securityGroups):
             },
         ]
     )
-    return response['LoadBalancers'][0]['LoadBalancerArn']
+    return (response['LoadBalancers'][0]['LoadBalancerArn'], response['LoadBalancers'][0]['DNSName'])
 
 
 def create_target_group_cluster1(vpc_id):
@@ -265,7 +265,8 @@ Condition2 = [
 
 rule_priority = [1, 2]
 
-if __name__ == '__main__':
+
+def setup():
     vpc_id = get_vpc_id()
     subnets = get_subnet_ids(vpc_id)
 
@@ -275,7 +276,8 @@ if __name__ == '__main__':
     time.sleep(15)
 
     # Load Balancer part
-    load_balancer_arn = create_load_balancer(subnets[:2], security_groups)
+    load_balancer_arn, DNSName = create_load_balancer(
+        subnets[:2], security_groups)
     time.sleep(15)
 
     target_group_arn = [create_target_group_cluster1(
@@ -290,4 +292,5 @@ if __name__ == '__main__':
         listener_arn, target_group_arn[0], rule_priority[0], Condition1)
     create_listener_rule(
         listener_arn, target_group_arn[1], rule_priority[1], Condition2)
-    # terminate_ec2()
+
+    return DNSName

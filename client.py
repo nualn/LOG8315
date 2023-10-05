@@ -1,27 +1,24 @@
 import requests
-import os
 import time
 import threading
 
 
 def doReqs1000(url):
     for _ in range(1000):
-        requests.get(url)
+        res = requests.get(url)
 
 
 def doReqs500pause500(url):
     for _ in range(1000):
-        requests.get(url)
+        res = requests.get(url)
     time.sleep(60)
     for _ in range(1000):
-        requests.get(url)
+        res = requests.get(url)
 
 
-if __name__ == '__main__':
-    url = os.getenv('URL')
-
-    t1 = threading.Thread(doReqs1000, url)
-    t2 = threading.Thread(doReqs500pause500, url)
+def make_requests(url):
+    t1 = threading.Thread(target=doReqs1000, args=[url])
+    t2 = threading.Thread(target=doReqs500pause500, args=[url])
 
     print('Sending requests...')
     t1.start()
