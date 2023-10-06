@@ -74,7 +74,7 @@ class Instances:
 
         # Create a security group
         response = ec2.create_security_group(
-            GroupName='Web-Access2',
+            GroupName='Web-Access',
             Description='Allow HTTP and HTTPS access',
             VpcId=vpc_id
         )
@@ -228,7 +228,7 @@ class Instances:
         # Load Balancer part
         load_balancer_arn, DNSName = self.create_load_balancer(
             subnets[:2], security_groups)
-        time.sleep(15)
+        time.sleep(60)
 
         target_group_arn = [self.create_target_group_cluster1(
             vpc_id), self.create_target_group_cluster2(vpc_id)]
