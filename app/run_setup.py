@@ -14,6 +14,5 @@ if __name__ == "__main__":
         'load_balancer_arn': load_balancer_arn,
         'target_groups_arn': target_groups_arn
     }
-    save_dict_to_file(data, 'aws_resources.json')
 
-    time.sleep(60)
+    save_dict_to_file(data, './data/aws_resources.json')

@@ -3,7 +3,7 @@ import client
 from utils import load_dict_from_file
 
 if __name__ == "__main__":
-    data = load_dict_from_file('aws_resources.json')
+    data = load_dict_from_file('./data/aws_resources.json')
 
     url = data['url']
     load_balancer_arn = data['load_balancer_arn']

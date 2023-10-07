@@ -10,24 +10,20 @@ class Instances:
         self.instance_2 = []
 
     def launch_instances(self, security_groups):
-        # Initialize a session using the default configuration
         session = boto3.Session(region_name='us-east-1')
-        # Initialize EC2 resource
         ec2 = session.resource('ec2')
-        # Loop to create 9 instances
+
         for i in range(9):
-            # Availability Zones
-            # 'us-east-1a', 'us-east-1b', 'us-east-1c' will be chosen in a round-robin manner
             availability_zone = f'us-east-1{chr(97 + i % 3)}'
 
             start_script = open('flask_clusters.sh', 'r').read()
-            # Create instance
+
             instance = ec2.create_instances(
-                ImageId='ami-067d1e60475437da2',  # Update this to your desired AMI ID
+                ImageId='ami-067d1e60475437da2',
                 MinCount=1,
                 MaxCount=1,
                 InstanceType="m4.large" if i % 2 else "t2.large",
-                KeyName='vockey',  # Update this to your key pair name
+                KeyName='vockey',
                 Placement={
                     'AvailabilityZone': availability_zone
                 },
@@ -45,10 +41,8 @@ class Instances:
             self.instance_ids.append(instance[0].id)
 
     def create_security_group(self, vpc_id):
-        # Initialize the EC2 client
         ec2 = boto3.client('ec2')
 
-        # Define the SSH rule
         ssh_rule = {
             'IpProtocol': 'tcp',
             'FromPort': 22,
@@ -56,7 +50,6 @@ class Instances:
             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
         }
 
-        # Define the HTTP rule
         http_rule = {
             'IpProtocol': 'tcp',
             'FromPort': 80,
@@ -64,7 +57,6 @@ class Instances:
             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
         }
 
-        # Define the HTTPS rule
         https_rule = {
             'IpProtocol': 'tcp',
             'FromPort': 443,
@@ -72,17 +64,14 @@ class Instances:
             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
         }
 
-        # Create a security group
         response = ec2.create_security_group(
             GroupName='Web-Access',
             Description='Allow HTTP and HTTPS access',
             VpcId=vpc_id
         )
 
-        # Get the created security group ID
         security_group_id = response['GroupId']
 
-        # Authorize the rules for the security group
         ec2.authorize_security_group_ingress(
             GroupId=security_group_id,
             IpPermissions=[ssh_rule, http_rule, https_rule]
@@ -105,10 +94,8 @@ class Instances:
         return default_vpc_id
 
     def get_subnet_ids(self, vpc_id):
-        # Initialize the EC2 client
         ec2 = boto3.client('ec2')
 
-        # Use the describe_subnets method with a filter for the specified VPC
         response = ec2.describe_subnets(
             Filters=[{'Name': 'vpc-id', 'Values': [vpc_id]}])
 
@@ -135,6 +122,8 @@ class Instances:
                 },
             ]
         )
+        print("Created Load Balancer " +
+              response['LoadBalancers'][0]['LoadBalancerArn'])
         return (response['LoadBalancers'][0]['LoadBalancerArn'], response['LoadBalancers'][0]['DNSName'])
 
     def create_target_group_cluster1(self, vpc_id):
@@ -143,7 +132,7 @@ class Instances:
             Name='tgcluster1',
             Protocol='HTTP',
             Port=80,
-            VpcId=vpc_id,  # replace with your VPC ID
+            VpcId=vpc_id,
             HealthCheckProtocol='HTTP',
             HealthCheckPort='80',
             HealthCheckPath='/cluster1',
@@ -160,7 +149,7 @@ class Instances:
             Name='tgcluster2',
             Protocol='HTTP',
             Port=80,
-            VpcId=vpc_id,  # replace with your VPC ID
+            VpcId=vpc_id,
             HealthCheckProtocol='HTTP',
             HealthCheckPort='80',
             HealthCheckPath='/cluster2',
