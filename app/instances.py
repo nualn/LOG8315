@@ -216,7 +216,7 @@ class Instances:
 
         # Load Balancer part
         load_balancer_arn, DNSName = self.create_load_balancer(
-            subnets[:2], security_groups)
+            subnets, security_groups)
         time.sleep(60)
 
         target_group_arn = [self.create_target_group_cluster1(

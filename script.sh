@@ -19,7 +19,6 @@ case "$1" in
     "benchmark")
         benchmark
         ;;
-    *)
-        setup
-        benchmark
 esac
+
+
