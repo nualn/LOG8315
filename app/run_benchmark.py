@@ -1,4 +1,5 @@
 import benchmark
+import run_analysis
 import client
 from utils import load_dict_from_file
 
@@ -16,4 +17,5 @@ if __name__ == "__main__":
     metric_data = benchmark.metric_data_tg
     target_group_metrics = benchmark.get_target_response_time(
         load_balancer_arn, target_groups_arn, metric_data)
-    print(target_group_metrics)
+    
+    run_analysis.do_analysis(target_group_metrics)
