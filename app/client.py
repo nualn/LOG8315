@@ -9,10 +9,10 @@ def doReqs1000(url):
 
 
 def doReqs500pause500(url):
-    for _ in range(1000):
+    for _ in range(500):
         res = requests.get(url)
     time.sleep(60)
-    for _ in range(1000):
+    for _ in range(500):
         res = requests.get(url)
 
 
