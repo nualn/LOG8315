@@ -20,7 +20,7 @@ def doReqs500pause1000(url):
 
 def make_requests(url):
     t1 = threading.Thread(target=doReqs1000, args=[url])
-    t2 = threading.Thread(target=doReqs500pause500, args=[url])
+    t2 = threading.Thread(target=doReqs500pause1000, args=[url])
 
     print('Sending requests...')
     t1.start()
