@@ -16,3 +16,5 @@ if __name__ == "__main__":
     }
 
     save_dict_to_file(data, './data/aws_resources.json')
+    time.sleep(60)
+    print('setup done, ready for benchmark')

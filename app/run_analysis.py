@@ -3,8 +3,29 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
 
-def do_analysis(metrics):
-    df = metrics
+def do_analysis(target_group_metrics):
+    
+    # Initialize an empty list to hold the flattened data
+    flattened_data = []
+
+    # Flatten the dictionary
+    for target_group, metrics in target_group_metrics.items():
+        for metric_name, metric_data in metrics.items():
+            for timestamp, value in metric_data:
+                flattened_data.append({
+                    'TargetGroup': target_group,
+                    'Metric': metric_name,
+                    'Timestamp': timestamp,
+                    'Value': value
+                })
+
+    # Create a Pandas DataFrame
+    df = pd.DataFrame(flattened_data)
+    
+    print(df.head())
+    
+    df['TargetGroup'] = df['TargetGroup'].str.extract(r'/(.*?)/')
+    
     df['Timestamp'] = pd.to_datetime(df['Timestamp'])
 
 
