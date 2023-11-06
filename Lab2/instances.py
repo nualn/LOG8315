@@ -42,7 +42,7 @@ class Instances:
 
     def launch_orchestrator(self, security_groups):
         ec2 = boto3.client('ec2')
-        start_script = open('flask_clusters.sh', 'r').read()
+        start_script = open('flask_cluster.sh', 'r').read()
 
         response = ec2.run_instances(
             ImageId=ImageId,
