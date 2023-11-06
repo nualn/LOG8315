@@ -19,7 +19,7 @@ def load_dict_from_file(filename):
 def create_worker_status_dict(worker_ips):
     status = {}
     for i, ip in enumerate(worker_ips):
-        first_container_name = f'container{i*2+1}'
+        first_container_name = f'container{i*2}'
         second_container_name = f'container{i*2+1}'
 
         status[first_container_name] = {
