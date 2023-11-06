@@ -25,7 +25,6 @@ class Instances:
         ec2 = boto3.client('ec2')
 
         for i in range(4):
-
             response = ec2.run_instances(
                 ImageId=ImageId,
                 MinCount=1,
@@ -158,7 +157,14 @@ class Instances:
         response = ec2.describe_instances(
             InstanceIds=instance_ids
         )
-        return response["Reservations"][0]["Instances"][0]["PublicDnsName"]
+        return [reservation["Instances"][0]["PublicDnsName"] for reservation in response["Reservations"]]
+
+    def getPublicIps(self, instance_ids):
+        ec2 = boto3.client('ec2')
+        response = ec2.describe_instances(
+            InstanceIds=instance_ids
+        )
+        return [reservation["Instances"][0]["PublicIpAddress"] for reservation in response["Reservations"]]
 
     def setup(self):
         vpc_id = self.get_vpc_id()

@@ -1,10 +1,22 @@
 from instances import Instances
-from utils import save_dict_to_file
+from utils import save_dict_to_file, create_worker_status_dict
 
 if __name__ == "__main__":
     instances = Instances()
     instances.setup()
-    open("key", "w").write(instances.key["KeyMaterial"])
+
+    key_file = open("key.pem", "w")
+    key_file.seek(0)
+    key_file.truncate()
+    key_file.write(instances.key["KeyMaterial"])
+
+    worker_ips = instances.getPublicIps(instances.worker_ids)
+    status = create_worker_status_dict(worker_ips)
+
+    print(instances.getPublicDnsName(instances.worker_ids))
+
+    save_dict_to_file(status, "./worker_status.json")
+
     input("Press Enter to terminate instances...")
     instances.teardown()
 
