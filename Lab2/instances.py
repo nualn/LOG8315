@@ -25,6 +25,8 @@ class Instances:
         ec2 = boto3.client('ec2')
 
         for i in range(4):
+            start_script = open('flask_clusters.sh', 'r').read()
+
             response = ec2.run_instances(
                 ImageId=ImageId,
                 MinCount=1,
@@ -34,6 +36,7 @@ class Instances:
                 Placement={
                     'AvailabilityZone': availability_zone
                 },
+                UserData=start_script,
                 SecurityGroups=security_groups
             )
 
@@ -42,6 +45,7 @@ class Instances:
 
     def launch_orchestrator(self, security_groups):
         ec2 = boto3.client('ec2')
+        start_script = open('flask_clusters.sh', 'r').read()
 
         response = ec2.run_instances(
             ImageId=ImageId,
@@ -52,6 +56,7 @@ class Instances:
             Placement={
                 'AvailabilityZone': availability_zone
             },
+            UserData=start_script,
             SecurityGroups=security_groups
         )
 
