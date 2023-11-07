@@ -14,19 +14,17 @@ if __name__ == "__main__":
     worker_ips = instances.getPublicIps(instances.worker_ids)
     status = create_worker_status_dict(worker_ips)
 
-    orchestrator_ip= instances.getPublicIps([instances.orchestrator_id])
+    orchestrator_ip = instances.getPublicIps([instances.orchestrator_id])
     status2 = create_worker_status_dict([orchestrator_ip])
-
 
     print(instances.getPublicDnsName(instances.worker_ids))
     print(instances.getPublicDnsName([instances.orchestrator_id]))
     print("orchestrator's ip :", orchestrator_ip)
-    
+
     """
     url = "http://"+str(orchestrator_ip[0])+"/cluster"
     print(f"{url}")
     make_requests(f"{url}")"""
-
 
     save_dict_to_file(status, "./worker_status.json")
 
