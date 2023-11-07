@@ -1,8 +1,6 @@
 import multiprocessing
 import requests
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+
 
 
 
@@ -15,13 +13,13 @@ def send_request(url):
     except requests.exceptions.RequestException as e:
         print(f"Error sending request to {url}: {e}")
     
-
-
-
-if __name__ == "__main__":
-    url="http://3.82.195.205/cluster" #I must get the orchestrator's url and add /cluster
-
+    
+def make_requests(url):
+    #the url must have the format http://ip/cluster
     num_requests = 5
     with multiprocessing.Pool(processes=num_requests) as pool: # it is going to create a pool of worker processes that will send requests simultaneously
         pool.map(send_request, [url] * num_requests)
+
+if __name__ == "__main__":
+    make_requests("http://44.204.24.197/cluster")
 
