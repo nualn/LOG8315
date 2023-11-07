@@ -1,5 +1,6 @@
 from instances import Instances
 from utils import save_dict_to_file, create_worker_status_dict
+from request_sender import send_request, make_requests
 
 if __name__ == "__main__":
     instances = Instances()
@@ -20,6 +21,11 @@ if __name__ == "__main__":
     print(instances.getPublicDnsName(instances.worker_ids))
     print(instances.getPublicDnsName([instances.orchestrator_id]))
     print("orchestrator's ip :", orchestrator_ip)
+    
+    """
+    url = "http://"+str(orchestrator_ip[0])+"/cluster"
+    print(f"{url}")
+    make_requests(f"{url}")"""
 
 
     save_dict_to_file(status, "./worker_status.json")
