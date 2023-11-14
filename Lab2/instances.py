@@ -5,8 +5,8 @@ import boto3
 availability_zone = 'us-east-1a'
 ImageId = "ami-067d1e60475437da2"
 
-
 class Instances:
+
     def __init__(self):
         self.worker_ids = []
         self.orchestrator_id = None
@@ -22,6 +22,11 @@ class Instances:
         print("Created key pair")
 
     def launch_workers(self, security_groups):
+        """create the ec2 m4.large instances representing the workers
+
+        Args:
+            security_groups : needed for the creation of the instances
+        """
         ec2 = boto3.client('ec2')
 
         for i in range(4):
@@ -41,6 +46,12 @@ class Instances:
             print(f'Launched worker{i}')
 
     def launch_orchestrator(self, security_groups):
+        
+        """creating a ec2 m4.large instance for orchestrator
+        Args:
+            security_groups : needed for the creation of the instance
+        """
+        
         ec2 = boto3.client('ec2')
         start_script = open('flask_cluster.sh', 'r').read()
 
@@ -61,6 +72,12 @@ class Instances:
         print("Launched orchestrator")
 
     def create_security_group(self, vpc_id):
+        """create a security group, needed for instances
+
+        Args:
+            vpc_id (string): needed for security group
+        """
+        
         groupName = "Web-Access"
         ec2 = boto3.client('ec2')
 
@@ -97,8 +114,12 @@ class Instances:
         }
 
         print("Created security group")
+        
 
     def terminate_workers(self):
+        """automatically terminates workers so we don't have to shut down the instances on AWS (manually)
+        
+        """
         ec2 = boto3.client('ec2')
         ec2.terminate_instances(
             InstanceIds=self.worker_ids
@@ -106,6 +127,9 @@ class Instances:
         print("Terminating workers")
 
     def terminate_orchestrator(self):
+        """automatically terminates the orchestrator so we don't have to shut down the instance on AWS (manually)
+        
+        """
         ec2 = boto3.client('ec2')
         ec2.terminate_instances(
             InstanceIds=[self.orchestrator_id]
@@ -113,6 +137,9 @@ class Instances:
         print("Terminating orchestrator")
 
     def remove_security_group(self, security_group_id):
+        """automatically removes the security group so we don't have to do it on AWS (manually)
+        
+        """
         ec2 = boto3.client('ec2')
         ec2.delete_security_group(
             GroupId=security_group_id
@@ -120,6 +147,9 @@ class Instances:
         print("Removed security group")
 
     def get_vpc_id(self):
+        """get the vpc_id of our AWS account that will be useful for the instances
+        
+        """
         ec2 = boto3.client('ec2')
         response = ec2.describe_vpcs(
             Filters=[{'Name': 'isDefault', 'Values': ['true']}])
@@ -128,6 +158,9 @@ class Instances:
         return default_vpc_id
 
     def delete_key_pair(self):
+        """automatically removes the key_pair so we don't have to do it on AWS (manually)
+        
+        """
         ec2 = boto3.client('ec2')
         ec2.delete_key_pair(
             KeyName=self.key['KeyName']
@@ -135,6 +168,11 @@ class Instances:
         print("Deleted key pair")
 
     def wait_for_instances_running(self):
+        
+        """wait for the instances to run properly so we don't call other functions before they're all ready and
+           so we don't use time.sleep() anymore
+        """
+        
         print("Waiting for all instances to be running...")
         ec2 = boto3.client('ec2')
         waiter = ec2.get_waiter('instance_running')
@@ -144,6 +182,11 @@ class Instances:
         print("Instances running...")
 
     def wait_for_instances_terminated(self):
+        
+        """wait for the instances to terminate so we don't do any other manipulation before they're all shut down and
+           so we don't use time.sleep() anymore
+        """
+        
         print("Waiting for all instances to be terminated...")
         ec2 = boto3.client('ec2')
         waiter = ec2.get_waiter('instance_terminated')
@@ -153,6 +196,14 @@ class Instances:
         print("Instances terminated...")
 
     def getPublicDnsName(self, instance_ids):
+        """gets the dns name on AWS
+
+        Args:
+            instance_ids (list of strings)
+
+        Returns:
+            list of DNS name
+        """
         ec2 = boto3.client('ec2')
         response = ec2.describe_instances(
             InstanceIds=instance_ids
@@ -160,6 +211,14 @@ class Instances:
         return [reservation["Instances"][0]["PublicDnsName"] for reservation in response["Reservations"]]
 
     def getPublicIps(self, instance_ids):
+        """gets the ip addresses of the instances that will be useful for sending requests
+
+        Args:
+            instance_ids (list of strings)
+
+        Returns:
+            list of ip addresses
+        """
         ec2 = boto3.client('ec2')
         response = ec2.describe_instances(
             InstanceIds=instance_ids
@@ -167,6 +226,10 @@ class Instances:
         return [reservation["Instances"][0]["PublicIpAddress"] for reservation in response["Reservations"]]
 
     def setup(self):
+        
+        """function that setup all the instances by calling all the creation functions above
+        """
+        
         vpc_id = self.get_vpc_id()
         self.create_security_group(vpc_id)
         self.create_key_pair()
@@ -178,6 +241,11 @@ class Instances:
         self.wait_for_instances_running()
 
     def teardown(self):
+        
+        """function that shut down all the instances and removing the security groups and so on
+           by calling all the teardown functions above
+        """
+        
         self.terminate_orchestrator()
         self.terminate_workers()
         # Wait for orchestrator to terminate so that security group can be removed
