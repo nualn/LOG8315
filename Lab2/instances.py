@@ -8,10 +8,11 @@ ImageId = "ami-067d1e60475437da2"
 
 class Instances:
 
-    def __init__(self):
-        self.worker_ids = []
-        self.orchestrator_id = None
-        self.security_group = None
+    def __init__(self, worker_ids=[], orchestrator_id=None, security_group=None, key=None):
+        self.worker_ids = worker_ids
+        self.orchestrator_id = orchestrator_id
+        self.security_group = security_group
+        self.key = key
 
     def create_key_pair(self):
         ec2 = boto3.client('ec2')
