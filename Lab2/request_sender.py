@@ -12,11 +12,13 @@ def send_request(url):
     Args:
         url (string): url desired
     """
-    
+    data_sent={"requests": "..."}
     try:
-        response = requests.get(url)
+        response = requests.post(url, json=data_sent)
+        data_received = response.json()
+        #response = requests.get(url)
         response.raise_for_status()  # Check for HTTP errors
-        print(f"Response from the cluster: {response.text}")
+        print(f"Response from the cluster: {data_received}")
     except requests.exceptions.RequestException as e:
         print(f"Error sending request to {url}: {e}")
     
