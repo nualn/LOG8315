@@ -6,6 +6,13 @@ import requests
 
 
 def send_request(url):
+    
+    """function that sends a request
+
+    Args:
+        url (string): url desired
+    """
+    
     try:
         response = requests.get(url)
         response.raise_for_status()  # Check for HTTP errors
@@ -15,7 +22,13 @@ def send_request(url):
     
     
 def make_requests(url):
-    #the url must have the format http://ip/cluster
+    
+    """Function that make 5 requests using the previous function
+
+    Args:
+        url (string): url desired, must have the format http://ip/cluster
+    """
+    
     num_requests = 5
     with multiprocessing.Pool(processes=num_requests) as pool: # it is going to create a pool of worker processes that will send requests simultaneously
         pool.map(send_request, [url] * num_requests)
