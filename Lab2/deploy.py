@@ -7,11 +7,10 @@ if __name__ == "__main__":
     instances.setup()
 
     key_file = open("key.pem", "w")
-    key_file.seek(0)
-    key_file.truncate()
     key_file.write(instances.key["KeyMaterial"])
+    key_file.close()
 
-    worker_ips = instances.getPublicIps(instances.worker_ids)
+    worker_ips = instances.getPrivateIps(instances.worker_ids)
     status = create_worker_status_dict(worker_ips)
 
     orchestrator_ip = instances.getPublicIps([instances.orchestrator_id])
