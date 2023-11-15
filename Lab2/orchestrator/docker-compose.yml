@@ -1,0 +1,6 @@
+
+services:
+  container1:
+    image: orchestrator-img
+    ports:
+      - 80:80

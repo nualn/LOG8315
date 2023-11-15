@@ -5,11 +5,15 @@ import time
 import requests
 import os
 import logging
+
+
+
 logging.basicConfig(filename='app.log', level=logging.DEBUG)
 app = Flask (__name__) 
+app.logger.level = logging.INFO
 lock = threading.Lock()
 request_queue = []
-worker_status_filepath = os.path.join(os.path.dirname(__file__), "..", "worker_status.json")
+worker_status_filepath = os.path.join(os.path.dirname(__file__), "worker_status.json")
 
 def send_request_to_container(container_id, container_info, incoming_request_data):  
     #! Put the code to call your instance here
@@ -47,6 +51,7 @@ def update_container_status(container_id, status):
                 process_request(request_queue.pop(0))
 
 def process_request(incoming_request_data): 
+    app.logging.info(f"entered process_request with data: {incoming_request_data}")
     with lock:
         with open(worker_status_filepath, "r") as f: 
             data = json.load(f)
@@ -67,10 +72,11 @@ def process_request(incoming_request_data):
 
 @app.route("/new_request", methods=["POST"]) 
 def new_request():
+    logging.debug(f"new Request")
     incoming_request_data = request.json
     threading.Thread (target=process_request, args=(incoming_request_data,)).start() 
     return jsonify({"message": "Request received and processing started."})
     
 
 if __name__ == "__main__":
-    app.run(port=80)
+    app.run(host='0.0.0.0', port=80, debug=True)

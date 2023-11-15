@@ -62,7 +62,7 @@ class Instances:
         """
 
         ec2 = boto3.client('ec2')
-        start_script = open('flask_cluster.sh', 'r').read()
+        #start_script = open('flask_cluster.sh', 'r').read()
 
         response = ec2.run_instances(
             ImageId=ImageId,
@@ -73,7 +73,7 @@ class Instances:
             Placement={
                 'AvailabilityZone': availability_zone
             },
-            UserData=start_script,
+           # UserData=start_script,
             SecurityGroups=security_groups
         )
 

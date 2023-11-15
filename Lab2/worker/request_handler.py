@@ -38,4 +38,4 @@ def run_model():
 
 if __name__ == '__main__':
     # Adjust the port as needed for your setup
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
