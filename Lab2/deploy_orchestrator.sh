@@ -1,6 +1,6 @@
 #!/bin/bash
 
-chmod 600 ~/key.pem
+chmod 600 ./data/key.pem
 
 python3 ./gen_worker_status.py
 

@@ -11,4 +11,4 @@ if __name__ == "__main__":
     worker_ips = instances.getPrivateIps(instances.worker_ids)
     status = create_worker_status_dict(worker_ips)
 
-    save_dict_to_file(status, "./data/worker_status.json")
+    save_dict_to_file(status, "./orchestrator/worker_status.json")

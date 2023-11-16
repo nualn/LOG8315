@@ -2,9 +2,9 @@
 echo "Input: $1"
 server_addr=$1
 
-scp -oStrictHostKeyChecking=no -i ~/key.pem ./data/orchestrator.zip ec2-user@$server_addr:orchestrator.zip
+scp -oStrictHostKeyChecking=no -i ./data/key.pem ./data/orchestrator.zip ec2-user@$server_addr:orchestrator.zip
 
-ssh -oStrictHostKeyChecking=no -tt -i ~/key.pem ec2-user@$1 << EOF
+ssh -oStrictHostKeyChecking=no -tt -i ./data/key.pem ec2-user@$1 << EOF
     sudo yum update
     sudo yum -y install docker
     

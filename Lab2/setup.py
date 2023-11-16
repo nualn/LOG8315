@@ -1,6 +1,5 @@
 from instances import Instances
-from utils import save_dict_to_file, create_worker_status_dict
-from request_sender import send_request, make_requests
+from utils import save_dict_to_file
 
 if __name__ == "__main__":
     instances = Instances()

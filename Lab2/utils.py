@@ -2,7 +2,7 @@ import json
 
 
 def save_dict_to_file(data, filename):
-    with open(filename, 'w') as file:
+    with open(filename, 'w+') as file:
         file.seek(0)
         file.truncate()
         file.write(json.dumps(data))

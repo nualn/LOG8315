@@ -1,6 +1,6 @@
 #!/bin/bash
 
-chmod 600 ~/key.pem
+chmod 600 ./data/key.pem
 zip -r ./data/worker.zip ./worker -x deploy.sh
 zip -r ./data/orchestrator.zip ./orchestrator -x deploy.sh
 
