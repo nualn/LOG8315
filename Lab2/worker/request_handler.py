@@ -3,6 +3,9 @@ from transformers import DistilBertTokenizer, DistilBertForSequenceClassificatio
 import torch
 import random
 import string
+import logging
+
+logging.basicConfig(filename='app.log', level=logging.DEBUG)
 
 app = Flask(__name__)
 

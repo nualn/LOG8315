@@ -22,7 +22,7 @@ def send_request_to_container(container_id, container_info, incoming_request_dat
         logging.debug(f"Sending request to {container_id} with data: {incoming_request_data}...")
         
         # Construct the URL for the container
-        container_url = f"http://{container_info['ip']}:{container_info['port']}/path_to_worker_endpoint"
+        container_url = f"http://{container_info['ip']}:{container_info['port']}/run_model"
         
         # Send the request to the worker container
         response = requests.post(container_url, json=incoming_request_data)
@@ -37,41 +37,43 @@ def send_request_to_container(container_id, container_info, incoming_request_dat
 
 
 def update_container_status(container_id, status):
-    with lock:
-        with open(worker_status_filepath, "r") as f:
-            data= json.load(f)
-        data[container_id]["status"] = status 
-        with open(worker_status_filepath, "w") as f: 
-            json.dump(data, f)
-        #check if there are any requests in the queue and process them
-        if status == "free":
-            logging.debug("Checking if there are any requests in the queue...")
-            if len(request_queue) > 0:
-                logging.debug("Found requests in the queue, processing the first one...")
-                process_request(request_queue.pop(0))
+    
+    with open(worker_status_filepath, "r") as f:
+        data= json.load(f)
+    data[container_id]["status"] = status 
+    with open(worker_status_filepath, "w") as f: 
+        json.dump(data, f)
 
 def process_request(incoming_request_data): 
-    app.logging.info(f"entered process_request with data: {incoming_request_data}")
+    app.logger.critical(f"entered process_request with data: {incoming_request_data}")
+    logging.critical(f"entered process_request with data: {incoming_request_data}")
+    
     with lock:
         with open(worker_status_filepath, "r") as f: 
             data = json.load(f)
-    free_container = None
-    for container_id, container_info in data.items(): 
-        if container_info["status"] == "free": 
-            free_container = container_id
-            break
+        free_container = None
+        for container_id, container_info in data.items(): 
+            if container_info["status"] == "free": 
+                free_container = container_id
+                break
+        if free_container:
+            update_container_status(free_container, "busy")
+    
     if free_container:
-        update_container_status(free_container, "busy")
         send_request_to_container(
             free_container, data[free_container], incoming_request_data
         )
-        update_container_status(free_container, "free")
+        with lock:
+            update_container_status(free_container, "free")
+        if request_queue:
+            process_request(request.queue.pop(0))
     else:
         request_queue.append(incoming_request_data)
 
 
 @app.route("/new_request", methods=["POST"]) 
 def new_request():
+    app.logger.critical(f"new Request")
     logging.debug(f"new Request")
     incoming_request_data = request.json
     threading.Thread (target=process_request, args=(incoming_request_data,)).start() 

@@ -31,10 +31,9 @@ def make_requests(url):
         url (string): url desired, must have the format http://ip/cluster
     """
     
-    num_requests = 5
+    num_requests = 10
     with multiprocessing.Pool(processes=num_requests) as pool: # it is going to create a pool of worker processes that will send requests simultaneously
         pool.map(send_request, [url] * num_requests)
 
 if __name__ == "__main__":
-    make_requests("http://44.204.24.197/cluster")
-
+    make_requests("http://52.91.200.169/new_request")

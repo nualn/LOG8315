@@ -4,7 +4,7 @@ WORKDIR /app
 
 COPY ./request_handler.py /app/
 COPY ./requirements.txt /app/
-COPY ../data/worker_status.json /app/
+COPY ./worker_status.json /app/
 
 RUN pip install -r requirements.txt
 
