@@ -1,3 +1,4 @@
+# Import necessary modules
 from flask import Flask, request, jsonify
 import threading
 import json
@@ -6,18 +7,22 @@ import requests
 import os
 import logging
 
-
-
+# Set up logging configuration
 logging.basicConfig(filename='app.log', level=logging.DEBUG)
-app = Flask (__name__) 
+
+# Create Flask application instance
+app = Flask(__name__)
 app.logger.level = logging.INFO
+
+# Set up threading lock for synchronization
 lock = threading.Lock()
+
+# Initialize request queue and worker status file path
 request_queue = []
 worker_status_filepath = os.path.join(os.path.dirname(__file__), "worker_status.json")
 
-def send_request_to_container(container_id, container_info, incoming_request_data):  
-    #! Put the code to call your instance here
-    #! this should get the ip of the instance, alongside the port and send the request to it 
+# Function to send request to a worker container
+def send_request_to_container(container_id, container_info, incoming_request_data):
     try:
         logging.debug(f"Sending request to {container_id} with data: {incoming_request_data}...")
         
@@ -35,16 +40,16 @@ def send_request_to_container(container_id, container_info, incoming_request_dat
         # Handle any errors that occur during the request
         logging.debug(f"An error occurred when sending request to {container_id}: {str(e)}")
 
-
+# Function to update the status of a worker container
 def update_container_status(container_id, status):
-    
     with open(worker_status_filepath, "r") as f:
-        data= json.load(f)
+        data = json.load(f)
     data[container_id]["status"] = status 
     with open(worker_status_filepath, "w") as f: 
         json.dump(data, f)
 
-def process_request(incoming_request_data): 
+# Function to process incoming requests
+def process_request(incoming_request_data):
     app.logger.critical(f"entered process_request with data: {incoming_request_data}")
     logging.critical(f"entered process_request with data: {incoming_request_data}")
     
@@ -66,19 +71,19 @@ def process_request(incoming_request_data):
         with lock:
             update_container_status(free_container, "free")
         if request_queue:
-            process_request(request.queue.pop(0))
+            process_request(request_queue.pop(0))
     else:
         request_queue.append(incoming_request_data)
 
-
+# Route for handling new requests
 @app.route("/new_request", methods=["POST"]) 
 def new_request():
     app.logger.critical(f"new Request")
     logging.debug(f"new Request")
     incoming_request_data = request.json
-    threading.Thread (target=process_request, args=(incoming_request_data,)).start() 
+    threading.Thread(target=process_request, args=(incoming_request_data,)).start() 
     return jsonify({"message": "Request received and processing started."})
-    
 
+# Run the Flask application
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=80, debug=True)
