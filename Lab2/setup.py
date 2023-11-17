@@ -1,6 +1,14 @@
 from instances import Instances
 from utils import save_dict_to_file
 
+"""this script simply initiate the instances of the workers and the orchestrator
+Writes the value of instances.key["KeyMaterial"] to the file.
+Closes the file.
+Constructs a dictionary named data containing information such as worker IDs, orchestrator ID, security group, and the key.
+Calls the save_dict_to_file function to save the data dictionary to a JSON file named ./data/aws_resources.json.
+
+"""
+
 if __name__ == "__main__":
     instances = Instances()
     instances.setup()
