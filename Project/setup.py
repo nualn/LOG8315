@@ -16,7 +16,7 @@ if __name__ == "__main__":
     instances.create_key_pair()
 
     security_groups = ["default", instances.security_group["name"]]
-    instances.launch_n_instances(4, "t2.micro", security_groups)
+    instances.launch_n_instances(3, "t2.micro", security_groups)
 
     data = {
         "instance_ids": instances.instance_ids,

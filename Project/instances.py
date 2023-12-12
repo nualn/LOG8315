@@ -174,6 +174,21 @@ class Instances:
         )
         return [reservation["Instances"][0]["PublicDnsName"] for reservation in response["Reservations"]]
 
+    def getPrivateDnsName(self, instance_ids):
+        """gets the dns name on AWS
+
+        Args:
+            instance_ids (list of strings)
+
+        Returns:
+            list of DNS name
+        """
+        ec2 = boto3.client('ec2')
+        response = ec2.describe_instances(
+            InstanceIds=instance_ids
+        )
+        return [reservation["Instances"][0]["PrivateDnsName"] for reservation in response["Reservations"]]
+
     def getPublicIps(self, instance_ids):
         """gets the ip addresses of the instances that will be useful for sending requests
 
