@@ -7,11 +7,16 @@ node1_addr=$3
 node2_addr=$4
 
 chmod 600 ./data/key.pem
-# SSH into the remote server and execute commands within the here document
+
 ssh -oStrictHostKeyChecking=no -tt -i ./data/key.pem ubuntu@$ssh_addr << EOF
 # Update the system packages
 sudo apt-get update
-sudo apt-get install tar
+sudo apt-get -y install libncurses5
+exit
+EOF
+
+# SSH into the remote server and execute commands within the here document
+ssh -oStrictHostKeyChecking=no -tt -i ./data/key.pem ubuntu@$ssh_addr << EOF
 
 sudo mkdir -p /opt/mysqlcluster/home
 cd /opt/mysqlcluster/home
@@ -25,9 +30,6 @@ echo "export MYSQLC_HOME=/opt/mysqlcluster/home/mysqlc" > /etc/profile.d/mysqlc.
 echo "export PATH=$MYSQLC_HOME/bin:$PATH" >> /etc/profile.d/mysqlc.sh 
 exit
 source /etc/profile.d/mysqlc.sh step 
-
-sudo apt-get update && sudo apt-get -y install libncurses5
-
 
 sudo mkdir -p /opt/mysqlcluster/deploy
 cd /opt/mysqlcluster/deploy

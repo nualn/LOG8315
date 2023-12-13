@@ -17,6 +17,7 @@ if __name__ == "__main__":
 
     security_groups = ["default", instances.security_group["name"]]
     instances.launch_n_instances(3, "t2.micro", security_groups)
+    instances.wait_for_instances_running()
 
     data = {
         "instance_ids": instances.instance_ids,
