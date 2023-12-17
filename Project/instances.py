@@ -73,6 +73,13 @@ class Instances:
             'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
         }
 
+        mysql_rule = {
+            'IpProtocol': 'tcp',
+            'FromPort': 3306,
+            'ToPort': 3306,
+            'IpRanges': [{'CidrIp': '0.0.0.0/0'}]
+        }
+
         response = ec2.create_security_group(
             GroupName=groupName,
             Description='Allow HTTP and SSH access',
@@ -83,7 +90,7 @@ class Instances:
 
         ec2.authorize_security_group_ingress(
             GroupId=security_group_id,
-            IpPermissions=[ssh_rule, http_rule],
+            IpPermissions=[ssh_rule, http_rule, mysql_rule],
         )
 
         self.security_group = {

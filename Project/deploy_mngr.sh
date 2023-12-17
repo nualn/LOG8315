@@ -5,6 +5,7 @@ ssh_addr=$1
 mngr_addr=$2
 node1_addr=$3
 node2_addr=$4
+node3_addr=$5
 
 chmod 600 ./data/key.pem
 
@@ -43,6 +44,7 @@ echo "[mysqld]
 ndbcluster
 datadir=/opt/mysqlcluster/deploy/mysqld_data
 basedir=/opt/mysqlcluster/home/mysqlc
+skip-name-resolve
 port=3306" > /opt/mysqlcluster/deploy/conf/my.cnf
 
 echo "[ndb_mgmd]
@@ -51,7 +53,7 @@ datadir=/opt/mysqlcluster/deploy/ndb_data
 nodeid=1
 
 [ndbd default]
-noofreplicas=2
+noofreplicas=3
 datadir=/opt/mysqlcluster/deploy/ndb_data
 
 [ndbd]
@@ -61,6 +63,10 @@ nodeid=3
 [ndbd]
 hostname=$node2_addr
 nodeid=4
+
+[ndbd]
+hostname=$node3_addr
+nodeid=5
 
 [mysqld]
 nodeid=50" > /opt/mysqlcluster/deploy/conf/config.ini
