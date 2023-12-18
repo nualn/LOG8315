@@ -18,6 +18,14 @@ exit
 EOF
     
 ssh -oStrictHostKeyChecking=no -tt -i ./data/key.pem ubuntu@${server_addr} << EOF
+
+sudo -i
+echo "[mysqld]
+bind-address=0.0.0.0" > /etc/mysql/mysql.conf.d/mysqld.cnf
+exit
+
+sudo systemctl restart mysql
+
 sudo mysql
 CREATE USER 'test'@'${machine_ip}' IDENTIFIED BY 'test';
 GRANT ALL PRIVILEGES ON *.* TO 'test'@'${machine_ip}';
@@ -38,13 +46,6 @@ SOURCE /home/ubuntu/sakila/sakila-db/sakila-data.sql;
 #Confirm that the sample database is installed correctly
 USE sakila
 exit
-
-sudo -i
-echo "[mysqld]
-port=3306
-skip-name-resolve
-skip-networking" > /etc/mysql/my.cnf
-exit 
 
 # Exit the SSH session
 exit
