@@ -10,12 +10,16 @@ exit
 EOF
 
 ssh -oStrictHostKeyChecking=no -tt -i ./data/key.pem ubuntu@$mngr_public << EOF
+sudo apt-get install unzip
+exit
+EOF
+
+ssh -oStrictHostKeyChecking=no -tt -i ./data/key.pem ubuntu@$mngr_public << EOF
 sudo /opt/mysqlcluster/home/mysqlc/bin/mysql
 CREATE USER 'test'@'${machine_ip}' IDENTIFIED BY 'test';
 GRANT ALL PRIVILEGES ON *.* TO 'test'@'${machine_ip}';
 exit
 
-sudo apt-get install unzip
 wget https://downloads.mysql.com/docs/sakila-db.zip
 unzip sakila-db.zip -d sakila
 
